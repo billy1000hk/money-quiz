@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>自测：你的3个金钱卡点在哪里？</title>
+  <style>
+    /* ===== 全局重置与变量 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:      #c9a84c;
+      --gold-light:#f0d47a;
+      --gold-pale: #fdf6e3;
+      --dark:      #1a1320;
+      --dark-card: #251d32;
+      --text:      #2d2440;
+      --text-muted:#7b6e8e;
+      --accent:    #8b5cf6;
+      --accent2:   #ec4899;
+      --radius:    16px;
+      --shadow:    0 8px 32px rgba(0,0,0,.12);
+    }
+
+    body {
+      font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      background: linear-gradient(135deg, #0f0c1a 0%, #1a1320 50%, #0d1117 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* ===== 粒子背景 ===== */
+    #particles {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+    @keyframes float {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: .6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ===== 布局容器 ===== */
+    .app { position: relative; z-index: 1; }
+
+    .page {
+      display: none;
+      min-height: 100vh;
+      padding: 0 0 60px;
+      animation: fadeIn .5s ease;
+    }
+    .page.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== 页头 Hero ===== */
+    .hero {
+      background: linear-gradient(160deg, #251d32 0%, #1a1320 60%, #0f0c1a 100%);
+      padding: 60px 24px 48px;
+      text-align: center;
+      border-bottom: 1px solid rgba(201,168,76,.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(139,92,246,.25) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(201,168,76,.15), rgba(201,168,76,.05));
+      border: 1px solid rgba(201,168,76,.4);
+      color: var(--gold-light);
+      font-size: 12px;
+      letter-spacing: 2px;
+      padding: 6px 18px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .hero-title {
+      font-size: clamp(24px, 5vw, 36px);
+      font-weight: 800;
+      line-height: 1.3;
+      background: linear-gradient(135deg, #fff 0%, var(--gold-light) 60%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+    .hero-sub {
+      color: rgba(255,255,255,.55);
+      font-size: 14px;
+      line-height: 1.7;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .hero-coins {
+      font-size: 48px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 20px rgba(201,168,76,.6));
+    }
+
+    /* ===== 内容区域 ===== */
+    .content { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+
+    /* ===== 提示卡片 ===== */
+    .notice-card {
+      background: linear-gradient(135deg, rgba(201,168,76,.12), rgba(201,168,76,.04));
+      border: 1px solid rgba(201,168,76,.3);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin: 28px 0;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .notice-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .notice-text {
+      color: rgba(255,255,255,.8);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    /* ===== 进度条 ===== */
+    .progress-wrap {
+      margin: 0 16px 24px;
+      max-width: 640px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .progress-label { font-size: 13px; color: rgba(255,255,255,.5); }
+    .progress-count { font-size: 13px; color: var(--gold-light); font-weight: 600; }
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,.1);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      border-radius: 100px;
+      transition: width .4s ease;
+      width: 0%;
+    }
+
+    /* ===== 题目卡片 ===== */
+    .question-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: border-color .3s;
+    }
+    .question-card.answered { border-color: rgba(201,168,76,.3); }
+    .question-num {
+      font-size: 11px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .question-num::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(201,168,76,.2);
+    }
+    .question-text {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.6;
+      color: rgba(255,255,255,.92);
+      margin-bottom: 18px;
+    }
+    .options { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ===== 选项 ===== */
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255,255,255,.1);
+      cursor: pointer;
+      transition: all .2s ease;
+      background: rgba(255,255,255,.02);
+      user-select: none;
+    }
+    .option:hover {
+      border-color: rgba(201,168,76,.4);
+      background: rgba(201,168,76,.06);
+      transform: translateX(3px);
+    }
+    .option.selected {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, rgba(201,168,76,.15), rgba(201,168,76,.05));
+    }
+    .option-letter {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      border: 1.5px solid rgba(255,255,255,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,.7);
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .option.selected .option-letter {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--dark);
+    }
+    .option-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(255,255,255,.75);
+      padding-top: 3px;
+    }
+    .option.selected .option-text { color: rgba(255,255,255,.95); }
+
+    /* ===== 按钮 ===== */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 32px auto 0;
+      padding: 16px;
+      background: linear-gradient(135deg, #c9a84c, #f0d47a, #c9a84c);
+      background-size: 200% 100%;
+      color: #1a1320;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all .3s ease;
+      box-shadow: 0 4px 20px rgba(201,168,76,.35);
+    }
+    .btn-primary:hover {
+      background-position: 100% 0;
+      box-shadow: 0 6px 28px rgba(201,168,76,.55);
+      transform: translateY(-2px);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 16px auto 0;
+      padding: 14px;
+      background: transparent;
+      color: rgba(255,255,255,.6);
+      font-size: 14px;
+      border: 1.5px solid rgba(255,255,255,.15);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all .3s;
+    }
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,.35);
+      color: #fff;
+    }
+
+    /* ===== Toast 提示 ===== */
+    .toast {
+      position: fixed;
+      bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30,20,40,.95);
+      border: 1px solid rgba(236,72,153,.4);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .3s;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== 结果页 ===== */
+    .result-hero {
+      background: linear-gradient(160deg, #251d32 0%, #1a1320 100%);
+      padding: 50px 24px 40px;
+      text-align: center;
+      border-bottom: 1px solid rgba(201,168,76,.2);
+    }
+    .score-ring {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-ring-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-number {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .score-total { font-size: 13px; color: rgba(255,255,255,.45); margin-top: 4px; }
+    .score-label {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .score-desc {
+      font-size: 14px;
+      color: rgba(255,255,255,.55);
+      line-height: 1.7;
+    }
+
+    /* ===== 卡点区块 ===== */
+    .section-title {
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 32px 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::before, .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(201,168,76,.4), transparent);
+    }
+    .section-title::after {
+      background: linear-gradient(270deg, rgba(201,168,76,.4), transparent);
+    }
+
+    .kadian-card {
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kadian-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+    }
+    .kadian-card.type-1 {
+      background: linear-gradient(135deg, rgba(236,72,153,.1), rgba(139,92,246,.05));
+      border: 1px solid rgba(236,72,153,.25);
+    }
+    .kadian-card.type-1::before { background: linear-gradient(90deg, #ec4899, #8b5cf6); }
+    .kadian-card.type-2 {
+      background: linear-gradient(135deg, rgba(245,158,11,.1), rgba(234,88,12,.05));
+      border: 1px solid rgba(245,158,11,.25);
+    }
+    .kadian-card.type-2::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .kadian-card.type-3 {
+      background: linear-gradient(135deg, rgba(16,185,129,.1), rgba(6,182,212,.05));
+      border: 1px solid rgba(16,185,129,.25);
+    }
+    .kadian-card.type-3::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+
+    .kadian-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .kadian-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .type-1 .kadian-icon { background: rgba(236,72,153,.15); }
+    .type-2 .kadian-icon { background: rgba(245,158,11,.15); }
+    .type-3 .kadian-icon { background: rgba(16,185,129,.15); }
+    .kadian-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .kadian-sub { font-size: 12px; color: rgba(255,255,255,.45); }
+
+    .kadian-section-label {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,.4);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 8px;
+      margin-top: 16px;
+    }
+    .kadian-symptoms {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kadian-symptoms li {
+      font-size: 13px;
+      color: rgba(255,255,255,.75);
+      line-height: 1.6;
+      padding-left: 18px;
+      position: relative;
+    }
+    .kadian-symptoms li::before {
+      content: "▪";
+      position: absolute;
+      left: 0;
+      opacity: .6;
+    }
+    .kadian-insight {
+      background: rgba(0,0,0,.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: rgba(255,255,255,.7);
+      line-height: 1.8;
+      margin-top: 4px;
+      border-left: 3px solid rgba(255,255,255,.15);
+    }
+    .kadian-tips {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .kadian-tips li {
+      font-size: 13px;
+      color: rgba(255,255,255,.75);
+      line-height: 1.7;
+      background: rgba(255,255,255,.04);
+      border-radius: 8px;
+      padding: 10px 14px;
+      padding-left: 32px;
+      position: relative;
+    }
+    .kadian-tips li::before {
+      content: attr(data-num);
+      position: absolute;
+      left: 10px;
+      width: 16px;
+      height: 16px;
+      background: rgba(255,255,255,.1);
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: 12px;
+    }
+
+    /* 无卡点状态 */
+    .no-kadian {
+      text-align: center;
+      padding: 32px 24px;
+      background: rgba(16,185,129,.08);
+      border: 1px solid rgba(16,185,129,.2);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+    }
+    .no-kadian-icon { font-size: 48px; margin-bottom: 12px; }
+    .no-kadian-text { color: rgba(255,255,255,.8); font-size: 15px; line-height: 1.8; }
+
+    /* ===== 下一步建议卡 ===== */
+    .suggestion-card {
+      background: linear-gradient(135deg, rgba(139,92,246,.12), rgba(59,130,246,.08));
+      border: 1px solid rgba(139,92,246,.25);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .suggestion-range {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .suggestion-text {
+      font-size: 15px;
+      color: rgba(255,255,255,.85);
+      line-height: 1.8;
+    }
+
+    /* ===== 结束语卡 ===== */
+    .ending-card {
+      background: linear-gradient(135deg, rgba(201,168,76,.12), rgba(201,168,76,.04));
+      border: 1px solid rgba(201,168,76,.3);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .ending-icon { font-size: 36px; margin-bottom: 14px; }
+    .ending-text {
+      font-size: 15px;
+      color: rgba(255,255,255,.8);
+      line-height: 1.9;
+      font-style: italic;
+    }
+
+    /* ===== 分享/重新按钮区 ===== */
+    .result-actions { padding: 8px 16px 0; max-width: 640px; margin: 0 auto; }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 480px) {
+      .hero { padding: 40px 20px 32px; }
+      .question-card { padding: 18px; }
+      .option { padding: 12px 14px; }
+      .kadian-card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 粒子背景 -->
+<div id="particles"></div>
+
+<!-- Toast 提示 -->
+<div class="toast" id="toast"></div>
+
+<div class="app">
+
+  <!-- ==================== 问卷页 ==================== -->
+  <div class="page active" id="page-quiz">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-coins">💰</div>
+      <div class="hero-badge">心理测评 · 10题自测</div>
+      <h1 class="hero-title">自测：你的3个金钱卡点<br>在哪里？</h1>
+      <p class="hero-sub">识别你在金钱观念上的主要心理障碍，获取针对性的改善建议</p>
+    </div>
+
+    <div class="content">
+
+      <!-- 进度条 -->
+      <div class="progress-wrap" style="margin-top:28px;">
+        <div class="progress-header">
+          <span class="progress-label">答题进度</span>
+          <span class="progress-count" id="progress-text">0 / 10</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- 测前说明 -->
+      <div class="notice-card">
+        <div class="notice-icon">✨</div>
+        <div class="notice-text">请根据你的<strong>第一反应</strong>选择最符合的选项，不要思考太久。完成后对照评分表，找到你的主要金钱卡点。</div>
+      </div>
+
+      <!-- 题目容器 -->
+      <div id="questions-container"></div>
+
+      <!-- 提交按钮 -->
+      <button class="btn-primary" id="submit-btn" onclick="submitQuiz()">查看我的金钱卡点 →</button>
+
+    </div>
+  </div>
+
+  <!-- ==================== 结果页 ==================== -->
+  <div class="page" id="page-result">
+
+    <!-- Result Hero -->
+    <div class="result-hero">
+      <div class="score-ring">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+          <circle cx="70" cy="70" r="58" fill="none"
+            stroke="url(#scoreGrad)" stroke-width="10"
+            stroke-linecap="round"
+            stroke-dasharray="364"
+            stroke-dashoffset="364"
+            id="score-arc"/>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#8b5cf6"/>
+              <stop offset="100%" stop-color="#c9a84c"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-ring-text">
+          <div class="score-number" id="result-score">0</div>
+          <div class="score-total">/ 20分</div>
+        </div>
+      </div>
+      <div class="score-label" id="result-level">--</div>
+      <div class="score-desc" id="result-desc">--</div>
+    </div>
+
+    <div class="content">
+
+      <!-- 卡点解读 -->
+      <div class="section-title">卡点解读</div>
+      <div id="kadian-container"></div>
+
+      <!-- 下一步建议 -->
+      <div class="section-title">下一步建议</div>
+      <div class="suggestion-card" id="suggestion-card">
+        <div class="suggestion-range" id="suggestion-range">--</div>
+        <div class="suggestion-text" id="suggestion-text">--</div>
+      </div>
+
+      <!-- 结束语 -->
+      <div class="section-title">写在最后</div>
+      <div class="ending-card">
+        <div class="ending-icon">🌱</div>
+        <div class="ending-text">金钱卡点不是你的错，它们只是你从小到大学来的程序。好消息是：程序可以被重写。你不需要更多努力，你需要的是不同的频率。</div>
+      </div>
+
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="result-actions">
+      <button class="btn-secondary" onclick="restartQuiz()">🔄 重新测试</button>
+    </div>
+
+  </div>
+
+</div><!-- end .app -->
+
+<script>
+// ========== 题目数据 ==========
+const QUESTIONS = [
+  {
+    id: 1,
+    text: "当别人给你钱（工资、红包、咨询费）时，你的第一感受是：",
+    options: [
+      { letter: "A", text: "很开心，这是我应得的" },
+      { letter: "B", text: "有点不好意思，想推辞一下" },
+      { letter: "C", text: "心里会想「他是不是有什么目的」" },
+      { letter: "D", text: "没什么感觉，正常收下" }
+    ],
+    scores: [0, 1, 2, 0]
+  },
+  {
+    id: 2,
+    text: "你小时候听到过关于钱最多的说法是：",
+    options: [
+      { letter: "A", text: "钱是赚不完的，够用就好" },
+      { letter: "B", text: "赚钱很辛苦，钱很难赚" },
+      { letter: "C", text: "有钱人都不干净/为富不仁" },
+      { letter: "D", text: "钱不是万能的，但不能没有" }
+    ],
+    scores: [1, 2, 2, 0]
+  },
+  {
+    id: 3,
+    text: "如果你突然中了100万彩票，你最可能会：",
+    options: [
+      { letter: "A", text: "规划怎么花/投资，很兴奋" },
+      { letter: "B", text: "害怕亲戚朋友来借钱" },
+      { letter: "C", text: "担心自己守不住这笔钱" },
+      { letter: "D", text: "觉得「终于轮到我了好运了」" }
+    ],
+    scores: [0, 2, 2, 0]
+  },
+  {
+    id: 4,
+    text: "当你想涨价/报出你的价格时，你常常：",
+    options: [
+      { letter: "A", text: "很自信，觉得值这个价" },
+      { letter: "B", text: "内心紧张，怕对方嫌贵" },
+      { letter: "C", text: "会先问对方预算" },
+      { letter: "D", text: "看人下菜碟，对有钱人报高价" }
+    ],
+    scores: [0, 2, 1, 1]
+  },
+  {
+    id: 5,
+    text: "你对自己的收入现状，最真实的感受是：",
+    options: [
+      { letter: "A", text: "满意，但想更高" },
+      { letter: "B", text: "总是不够花，不知道钱去哪了" },
+      { letter: "C", text: "明明很努力，却赚不到大钱" },
+      { letter: "D", text: "已经接受了，就这样吧" }
+    ],
+    scores: [0, 2, 2, 1]
+  },
+  {
+    id: 6,
+    text: "看到别人赚钱很轻松（比如网红带货、投资获利），你的第一反应是：",
+    options: [
+      { letter: "A", text: "羡慕，想学习他的方法" },
+      { letter: "B", text: "觉得他运气好/有背景" },
+      { letter: "C", text: "怀疑是不是骗人的" },
+      { letter: "D", text: "无所谓，跟我没关系" }
+    ],
+    scores: [0, 2, 1, 1]
+  },
+  {
+    id: 7,
+    text: "你花钱时，常常会：",
+    options: [
+      { letter: "A", text: "有计划地花，该花就花" },
+      { letter: "B", text: "花完就后悔，觉得不该买" },
+      { letter: "C", text: "只买便宜的，不敢买贵的" },
+      { letter: "D", text: "存不住钱，有多少花多少" }
+    ],
+    scores: [0, 1, 2, 1]
+  },
+  {
+    id: 8,
+    text: "如果有人对你说「你也可以成为有钱人」，你内心真正的想法是：",
+    options: [
+      { letter: "A", text: "我相信，我正在努力" },
+      { letter: "B", text: "不太可能，我不够聪明/资源" },
+      { letter: "C", text: "有钱了也不一定快乐" },
+      { letter: "D", text: "真的吗？那我该怎么做？" }
+    ],
+    scores: [0, 2, 1, 1]
+  },
+  {
+    id: 9,
+    text: "你对于「负债」的看法是：",
+    options: [
+      { letter: "A", text: "好的负债（如房贷）可以接受" },
+      { letter: "B", text: "坚决不欠任何人的钱" },
+      { letter: "C", text: "欠钱会让我睡不好觉" },
+      { letter: "D", text: "负债是没办法的事" }
+    ],
+    scores: [0, 1, 2, 1]
+  },
+  {
+    id: 10,
+    text: "当你的收入突然增加（比如涨薪、拿到大单），你通常：",
+    options: [
+      { letter: "A", text: "庆祝一下，然后继续工作" },
+      { letter: "B", text: "担心下个月还能不能维持" },
+      { letter: "C", text: "会多花钱犒劳自己" },
+      { letter: "D", text: "会存起来，不敢乱花" }
+    ],
+    scores: [0, 2, 1, 1]
+  }
+];
+
+// ========== 卡点数据 ==========
+const KADIAN_DATA = [
+  {
+    id: 1,
+    type: "type-1",
+    icon: "💔",
+    title: "金钱羞耻 / 不配得感",
+    sub: "第 1、4、8 题",
+    triggerQuestions: [1, 4, 8],
+    symptoms: [
+      "别人给你钱会觉得不好意思",
+      "不敢报高价，怕被拒绝",
+      "内心觉得「我不值那么多钱」",
+      "收钱后会有愧疚感"
+    ],
+    insight: "你发出的频率是「我不够好，我不配拥有丰盛」。宇宙会回应你——让你持续经历「付出多、回报少」的循环。",
+    tips: [
+      "每天对镜子说3遍：「我值得拥有丰盛，我允许自己收钱。」",
+      "每次收到钱，无论多少，说一声「谢谢你，我爱你」。",
+      "练习「假装拥有法」：想象你已经是一个自信报价的人，写出你会怎么说。"
+    ]
+  },
+  {
+    id: 2,
+    type: "type-2",
+    icon: "😰",
+    title: "金钱恐惧 / 匮乏感",
+    sub: "第 2、3、5、10 题",
+    triggerQuestions: [2, 3, 5, 10],
+    symptoms: [
+      "觉得赚钱很辛苦、很难",
+      "有钱了也害怕失去",
+      "收入增加时反而焦虑",
+      "总觉得钱不够花"
+    ],
+    insight: "你发出的频率是「钱是稀缺的、危险的」。宇宙会回应你——让你持续经历「辛苦赚钱、留不住钱」的循环。",
+    tips: [
+      "每天写一句感恩日记：「今天我感谢金钱以____的方式流向我。」",
+      "改变口头禅：把「赚钱好难」改成「赚钱越来越轻松」。",
+      "练习「丰盛视觉化」：每天花3分钟想象自己已经财务自由的具体画面。"
+    ]
+  },
+  {
+    id: 3,
+    type: "type-3",
+    icon: "🤔",
+    title: "金钱怀疑 / 限制性信念",
+    sub: "第 6、7、9 题",
+    triggerQuestions: [6, 7, 9],
+    symptoms: [
+      "看到别人轻松赚钱，第一反应是「假的」或「运气」",
+      "花钱后容易后悔",
+      "害怕负债，甚至拒绝好的杠杆机会",
+      "对新的赚钱机会持怀疑态度"
+    ],
+    insight: "你发出的频率是「钱是复杂的，赚钱需要特殊条件」。宇宙会回应你——让你持续看到「别人赚钱，但你不行」的证据。",
+    tips: [
+      "每天找一个「赚钱可以很轻松」的例子（哪怕是别人的故事）。",
+      "花钱时对自己说：「我花出去的每一分钱，都会以更大的倍数回流。」",
+      "找一位已经轻松赚钱的人，观察他的思维模式，尝试模仿。"
+    ]
+  }
+];
+
+// ========== 状态 ==========
+let answers = new Array(10).fill(null); // index 0~9 => 题目1~10
+
+// ========== 渲染题目 ==========
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = QUESTIONS.map((q, qi) => `
+    <div class="question-card" id="qcard-${q.id}">
+      <div class="question-num">题目 ${String(q.id).padStart(2,'0')}</div>
+      <div class="question-text">${q.text}</div>
+      <div class="options">
+        ${q.options.map((opt, oi) => `
+          <div class="option" id="opt-${q.id}-${oi}" onclick="selectOption(${q.id-1}, ${oi})">
+            <div class="option-letter">${opt.letter}</div>
+            <div class="option-text">${opt.text}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ========== 选择选项 ==========
+function selectOption(qIdx, optIdx) {
+  const qId = qIdx + 1;
+
+  // 清除同题旧选项
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`opt-${qId}-${i}`);
+    if (el) el.classList.remove('selected');
+  }
+
+  // 设置新选项
+  const selected = document.getElementById(`opt-${qId}-${optIdx}`);
+  if (selected) selected.classList.add('selected');
+
+  // 记录答案
+  answers[qIdx] = optIdx;
+
+  // 标记卡片已作答
+  const card = document.getElementById(`qcard-${qId}`);
+  if (card) card.classList.add('answered');
+
+  // 更新进度
+  updateProgress();
+}
+
+function updateProgress() {
+  const done = answers.filter(a => a !== null).length;
+  document.getElementById('progress-text').textContent = `${done} / 10`;
+  document.getElementById('progress-fill').style.width = `${done * 10}%`;
+}
+
+// ========== 提交 ==========
+function submitQuiz() {
+  const unanswered = answers.map((a, i) => a === null ? i + 1 : null).filter(Boolean);
+
+  if (unanswered.length > 0) {
+    showToast(`请先完成第 ${unanswered.join('、')} 题 🙏`);
+    // 滚动到第一道未答题
+    const firstUnanswered = document.getElementById(`qcard-${unanswered[0]}`);
+    if (firstUnanswered) {
+      firstUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstUnanswered.style.borderColor = 'rgba(236,72,153,.5)';
+      setTimeout(() => { firstUnanswered.style.borderColor = ''; }, 2000);
+    }
+    return;
+  }
+
+  computeResult();
+}
+
+// ========== 计算结果 ==========
+function computeResult() {
+  // 计算各题得分
+  const scores = answers.map((optIdx, qi) => {
+    return QUESTIONS[qi].scores[optIdx];
+  });
+
+  const totalScore = scores.reduce((a, b) => a + b, 0);
+
+  // 判定触发哪些卡点（得2分的题目）
+  const twoScoreQuestions = new Set();
+  scores.forEach((s, qi) => {
+    if (s === 2) twoScoreQuestions.add(qi + 1); // 题号1~10
+  });
+
+  const triggeredKadian = KADIAN_DATA.filter(k =>
+    k.triggerQuestions.some(qid => twoScoreQuestions.has(qid))
+  );
+
+  showResult(totalScore, triggeredKadian);
+}
+
+// ========== 展示结果 ==========
+function showResult(score, kadianList) {
+  // 切换页面
+  document.getElementById('page-quiz').classList.remove('active');
+  document.getElementById('page-result').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // 分数动画
+  document.getElementById('result-score').textContent = score;
+  const arc = document.getElementById('score-arc');
+  const circumference = 364;
+  const offset = circumference - (score / 20) * circumference;
+  setTimeout(() => {
+    arc.style.transition = 'stroke-dashoffset 1.2s ease';
+    arc.style.strokeDashoffset = offset;
+  }, 300);
+
+  // 等级文字
+  let level, desc;
+  if (score <= 5) {
+    level = '金钱卡点较少 ✨';
+    desc = '你与金钱的关系较为健康，内心对丰盛的接纳度较高。';
+  } else if (score <= 12) {
+    level = '存在2-3个明显卡点 ⚡';
+    desc = '你有一些需要关注的金钱信念，通过针对性练习可以改善。';
+  } else {
+    level = '金钱卡点较多 🌊';
+    desc = '你的金钱卡点可能已经影响了你的收入水平，需要系统性地清理。';
+  }
+  document.getElementById('result-level').textContent = level;
+  document.getElementById('result-desc').textContent = desc;
+
+  // 卡点解读
+  const container = document.getElementById('kadian-container');
+  if (kadianList.length === 0) {
+    container.innerHTML = `
+      <div class="no-kadian">
+        <div class="no-kadian-icon">🎉</div>
+        <div class="no-kadian-text">你没有明显的金钱卡点，继续保持健康的金钱心态，放大你的丰盛频率！</div>
+      </div>`;
+  } else {
+    container.innerHTML = kadianList.map(k => `
+      <div class="kadian-card ${k.type}">
+        <div class="kadian-header">
+          <div class="kadian-icon">${k.icon}</div>
+          <div>
+            <div class="kadian-title">卡点${['一','二','三'][k.id-1]}：${k.title}</div>
+            <div class="kadian-sub">涉及 ${k.sub}</div>
+          </div>
+        </div>
+
+        <div class="kadian-section-label">典型表现</div>
+        <ul class="kadian-symptoms">
+          ${k.symptoms.map(s => `<li>${s}</li>`).join('')}
+        </ul>
+
+        <div class="kadian-section-label" style="margin-top:14px;">吸引力法则解读</div>
+        <div class="kadian-insight">${k.insight}</div>
+
+        <div class="kadian-section-label" style="margin-top:14px;">初步改善建议</div>
+        <ul class="kadian-tips">
+          ${k.tips.map((t, i) => `<li data-num="${i+1}">${t}</li>`).join('')}
+        </ul>
+      </div>
+    `).join('');
+  }
+
+  // 下一步建议
+  let range, suggestion;
+  if (score <= 5) {
+    range = '总分 0–5 分';
+    suggestion = '恭喜你，你的金钱卡点较少。你只需要持续练习吸引力法则，放大你的丰盛频率。';
+  } else if (score <= 12) {
+    range = '总分 6–12 分';
+    suggestion = '你有2-3个明显的卡点。建议先从「感恩日记」和「视觉化」开始练习，同时针对你的高频卡点做改善。';
+  } else {
+    range = '总分 13–20 分';
+    suggestion = '你的金钱卡点较多，可能已经影响了你的收入水平。建议系统学习金钱秘密的课程，或者找一位导师带你深度清理。';
+  }
+  document.getElementById('suggestion-range').textContent = range;
+  document.getElementById('suggestion-text').textContent = suggestion;
+}
+
+// ========== 重新测试 ==========
+function restartQuiz() {
+  answers = new Array(10).fill(null);
+
+  // 重置进度
+  document.getElementById('progress-text').textContent = '0 / 10';
+  document.getElementById('progress-fill').style.width = '0%';
+
+  // 清除所有选中状态
+  QUESTIONS.forEach(q => {
+    const card = document.getElementById(`qcard-${q.id}`);
+    if (card) card.classList.remove('answered');
+    q.options.forEach((_, oi) => {
+      const opt = document.getElementById(`opt-${q.id}-${oi}`);
+      if (opt) opt.classList.remove('selected');
+    });
+  });
+
+  // 重置圆弧
+  const arc = document.getElementById('score-arc');
+  arc.style.transition = 'none';
+  arc.style.strokeDashoffset = '364';
+
+  // 切换页面
+  document.getElementById('page-result').classList.remove('active');
+  document.getElementById('page-quiz').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ========== Toast ==========
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ========== 粒子背景 ==========
+function initParticles() {
+  const container = document.getElementById('particles');
+  const colors = ['rgba(201,168,76,', 'rgba(139,92,246,', 'rgba(255,255,255,'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 4 + 2;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    p.style.cssText = `
+      width: ${size}px;
+      height: ${size}px;
+      left: ${Math.random() * 100}%;
+      background: ${color}${Math.random() * 0.4 + 0.2})};
+      animation-duration: ${Math.random() * 15 + 10}s;
+      animation-delay: ${Math.random() * 10}s;
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ========== 初始化 ==========
+renderQuestions();
+initParticles();
+</script>
+</body>
+</html>
